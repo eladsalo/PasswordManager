@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from random import choice, randint, shuffle
 import pyperclip
-
+import json
 # ---------------------------- CONSTANTS ------------------------------- #
 FONT_NAME = "Courier"
 
@@ -26,6 +26,7 @@ def generate_password():
     # this will make that the new generated password will be on the clipboard,
     # therefore now we can press ctrl+v tp pasted it
 
+
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save(website, user_name, password):
     if len(website) == 0 or len(user_name) == 0 or len(password) ==0 :
@@ -34,14 +35,45 @@ def save(website, user_name, password):
         is_ok = messagebox.askokcancel(title="Conformation", message=f"These are the details entered:\n"
                                                       f"\nEmail: {user_name} \nPassword: {password} \n Is it ok to save?")
         if is_ok:
-            with open("data.txt", "a") as data_file:
-                data_file.write(f"{website}  |  {user_name}  |  {password}\n")
+            new_data = {website: {
+                "email": user_name,
+                "password": password,
+            }}
+
+            try:
+                with open("data.json", "r") as data_file:
+                    # reading old data
+                    data = json.load(data_file)
+                    # updating old data with new data
+                    data.update(new_data)
+            except FileNotFoundError:
+                data = new_data
+
+            with open("data.json", "w") as data_file:
+                # Saving updating data
+                json.dump(data, data_file, indent=4)
+
                 website_input.delete(0, END)
                 email_input.delete(0, END)
                 password_input.delete(0, END)
-                email_input.insert(0, "@gmail.com")
+                email_input.insert(0, "elad2salomonS@gmail.com")
                 website_input.focus()
 
+
+# ---------------------------- SEARCH  ------------------------------- #
+def search():
+    try:
+        with open("data.json", "r") as data_file:
+            # reading data
+            data = json.load(data_file)
+            ans = data[website_input.get()]
+            user = ans["email"]
+            password = ans["password"]
+            messagebox.showinfo(title=website_input.get(), message=f"User/Mail: {user}\nPassword: {password}")
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error", message="Website not found in the data")
+    except KeyError:
+        messagebox.showinfo(title="Error", message="Website not found in the data")
 
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
@@ -69,20 +101,22 @@ website_label.grid(row=3, column=0)
 add_button = Button(text="Add", width=36, command=lambda: save(website_input.get(), email_input.get(), password_input.get()))
 add_button.grid(row=4, column=1, columnspan=2)
 
-generate_button = Button(text="Generate Password", command=generate_password)
+generate_button = Button(text="Generate Password", width=13, command=generate_password)
 generate_button.grid(row=3, column=2)
 
+search_button = Button(text="Search", width=13, command=search)
+search_button.grid(row=1, column=2)
 
 # --- Entries --- #
-website_input = Entry(width=39)
-website_input.grid(column=1, row=1, columnspan=2)
+website_input = Entry(width=31)
+website_input.grid(column=1, row=1)
 website_input.focus()
 
-email_input = Entry(width=39)
+email_input = Entry(width=48)
 email_input.grid(column=1, row=2, columnspan=2)
 email_input.insert(0, "elad2salomon@gmail.com")
 
-password_input = Entry(width=25)
+password_input = Entry(width=31)
 password_input.grid(column=1, row=3)
 
 window.mainloop()
